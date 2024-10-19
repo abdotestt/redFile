@@ -8,7 +8,6 @@ use Spatie\Permission\Models\Permission;
 
 class RolePermissionController extends Controller
 {
-    // Add permission to a role
     public function addPermissionToRole(Request $request)
     {
         // Validate the request
@@ -28,7 +27,6 @@ class RolePermissionController extends Controller
         ]);
     }
 
-    // Revoke a permission from a role
     public function revokePermissionFromRole(Request $request)
     {
         // Validate the request
@@ -48,7 +46,6 @@ class RolePermissionController extends Controller
         ]);
     }
 
-    // Sync permissions (replace all permissions)
     public function syncPermissionsForRole(Request $request)
     {
         // Validate the request

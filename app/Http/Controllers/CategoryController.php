@@ -17,10 +17,10 @@ class CategoryController extends Controller
     // Créer une nouvelle catégorie
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-        ]);
+        // $request->validate([
+        //     'name' => 'required|string|max:255',
+        //     'description' => 'nullable|string',
+        // ]);
 
         $category = Category::create([
             'name' => $request->name,

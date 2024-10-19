@@ -18,7 +18,7 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => 'required|string|min:8',
         ]);
 
         $user = User::create([
@@ -29,15 +29,14 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
         if($user){
-            $user = User::find(1); // Example user
-            $roleId=ModelHa
-            // Find role by ID
-            $role = Role::find(1); // Example role ID
-            
-            // Assign role by ID
-            $user->assignRole($role->name);
-                    return response()->json(['access_token' => $token, 'token_type' => 'Bearer']);
-
+            $role = Role::findByName('user');
+            if($role){
+                $user->assignRole($role);
+                $roleAssigned = $role->name;
+            }else{
+                $roleAssigned = "failed to affect a role to this user";
+            }
+            return response()->json(['access_token' => $token, 'token_type' => 'Bearer' ,'your role is : '=>$roleAssigned]);    
         }else{
             return response()->json(["error"=>"eroor"]);
 
@@ -74,8 +73,6 @@ class AuthController extends Controller
         ]);
 
     }
-
-//    statut ok
 
 
     public function logout(Request $request)

@@ -21,11 +21,17 @@ class DocumentController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'file' => 'required|file|mimes:pdf,doc,docx',
+            'description' => 'required|string',
             'category_id' => 'required|exists:categories,id',
+
         ]);
 
-        // Upload du fichier
-        $filePath = $request->file('file')->store('documents');
+        $extension = $request->file('file')->getClientOriginalExtension();
+
+        // Create a custom file name using the title (with extension)
+        $fileName = $request->title . '.' . $extension;    
+        // Upload the file to the 'documents' directory with the custom file name
+        $filePath = $request->file('file')->storeAs('documents', $fileName);
 
         // Création du document
         $document = Document::create([

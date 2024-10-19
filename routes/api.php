@@ -3,6 +3,10 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DocumentController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -15,42 +19,34 @@ use App\Http\Controllers\AuthController;
 |
 */
 
-// Get authenticated user's details
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
-// User registration
 Route::post('/register', [AuthController::class, 'register']);
 
-// User login
 Route::post('/login', [AuthController::class, 'login']);
 
-// User logout (requires authentication)
-Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
-use App\Http\Controllers\RolePermissionController;
 
-Route::post('/role/add-permission', [RolePermissionController::class, 'addPermissionToRole']);
-Route::post('/role/revoke-permission', [RolePermissionController::class, 'revokePermissionFromRole']);
-Route::post('/role/sync-permissions', [RolePermissionController::class, 'syncPermissionsForRole']);
 
-use App\Http\Controllers\CategoryController;
 
 Route::middleware('auth:sanctum')->group(function () {
+    // deconnexion
+    Route::post('/logout', [AuthController::class, 'logout']);
+    // url de categories
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::post('/categories', [CategoryController::class, 'store']);
     Route::get('/categories/{id}', [CategoryController::class, 'show']);
     Route::put('/categories/{id}', [CategoryController::class, 'update']);
     Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
-});
-
-
-use App\Http\Controllers\DocumentController;
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/documents', [DocumentController::class, 'index']);
+//url de gestion des documents
+    Route::get('/documents', [DocumentController::class, 'index'])->middleware('role:admin');
     Route::post('/documents', [DocumentController::class, 'store']);
     Route::get('/documents/{id}/download', [DocumentController::class, 'download']);
     Route::delete('/documents/{id}', [DocumentController::class, 'destroy']);
+    
+    // gestion des permissions 
+    Route::post('/role/add-permission', [RolePermissionController::class, 'addPermissionToRole']);
+    Route::post('/role/revoke-permission', [RolePermissionController::class, 'revokePermissionFromRole']);
 });
+
+
+
+
