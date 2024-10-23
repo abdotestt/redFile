@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -37,11 +38,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/categories/{id}', [CategoryController::class, 'update']);
     Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 //url de gestion des documents
-    Route::get('/documents', [DocumentController::class, 'index'])->middleware('role:admin');
+    Route::get('/documents', [DocumentController::class, 'index']);
     Route::post('/documents', [DocumentController::class, 'store']);
     Route::get('/documents/{id}/download', [DocumentController::class, 'download']);
     Route::delete('/documents/{id}', [DocumentController::class, 'destroy']);
-    
+    // 
+    Route::get('/users', [UserController::class, 'index']);
+    Route::post('/users', [UserController::class, 'store']);
+    Route::get('/users/{id}', [UserController::class, 'show']);
+    Route::put('/users/{id}', [UserController::class, 'update']);
+    Route::delete('/users/{id}', [UserController::class, 'destroy']);
     // gestion des permissions 
     Route::post('/role/add-permission', [RolePermissionController::class, 'addPermissionToRole']);
     Route::post('/role/revoke-permission', [RolePermissionController::class, 'revokePermissionFromRole']);
