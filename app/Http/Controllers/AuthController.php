@@ -13,6 +13,28 @@ use Spatie\Permission\Models\Role;
 
 class AuthController extends Controller
 {
+
+        /**
+     * @group Auth
+     * Register a new user
+     *
+     * This endpoint allows you to register a new user.
+     *
+     * @bodyParam name string required The name of the user. Example: John Doe
+     * @bodyParam email string required The email of the user. Example: johndoe@example.com
+     * @bodyParam password string required The password of the user. Example: secret
+     *
+     * @response 201 {
+     *  "user": {
+     *      "id": 1,
+     *      "name": "John Doe",
+     *      "email": "johndoe@example.com",
+     *      "created_at": "2023-10-20",
+     *      "updated_at": "2023-10-20"
+     *  },
+     *  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+     * }
+ */
     public function register(Request $request)
     {
         $request->validate([
@@ -74,7 +96,18 @@ class AuthController extends Controller
 
     }
 
-
+    /**
+     * @group Auth
+     * Logout the user
+     *
+     * This endpoint requires authentication.
+     * 
+     * @authenticated
+     *
+     * @response 200 {
+     *  "message": "Logged out successfully."
+     * }
+     */
     public function logout(Request $request)
     {
         $request->user()->tokens()->delete();

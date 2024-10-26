@@ -5,104 +5,114 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
+use Illuminate\Support\Facades\Log; // Make sure to import the Log facade
+
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function index()
     {
-        // Retrieve all users and return as JSON
-        $users = User::all();
-        return response()->json($users);
+        try {
+            $users = User::with('roles', 'permissions')->get();
+            return response()->json($users);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to retrieve users'], 500);
+        }
     }
 
-   
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
-        // Validate the incoming request
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-        ]);
 
-        // Create a new user
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
-        return response()->json(['message' => 'User created successfully', 'user' => $user], 201);
+        try {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users',
+                'password' => 'required|string|min:8',
+                'role' => 'nullable|string|exists:roles,name',
+                
+            ]);
+        
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
+        
+            if ($request->filled('role')) {
+                $role = Role::findByName($request->role); // Specify the guard
+                if ($role) {
+                    $user->assignRole($role);
+                } else {
+                    Log::warning('Role not found: ' . $request->role);
+                }
+            }
+        
+           
+        
+            return response()->json(['message' => 'User  created successfully', 'user' => $user], 201);
+        } catch (ValidationException $e) {
+            return response()->json(['errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Failed to create user: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to create user', 'message' => $e->getMessage()], 500);
+        }
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function show($id)
     {
-        // Find user by ID or return 404
-        $user = User::findOrFail($id);
-        return response()->json($user);
+        try {
+            $user = User::with('roles', 'permissions')->findOrFail($id);
+            return response()->json($user);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
-        // Validate the request data
-        $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|string|email|max:255|unique:users,email,'.$id,
-            'password' => 'sometimes|required|string|min:8',
-        ]);
+        try {
+            $request->validate([
+                'name' => 'sometimes|required|string|max:255',
+                'email' => 'sometimes|required|string|email|max:255|unique:users,email,'.$id,
+                'password' => 'sometimes|required|string|min:8',
+                'role' => 'sometimes|required|string|exists:roles,name',
+                'permissions' => 'array|exists:permissions,name',
+            ]);
 
-        // Find the user
-        $user = User::findOrFail($id);
+            $user = User::findOrFail($id);
+            $user->update([
+                'name' => $request->input('name', $user->name),
+                'email' => $request->input('email', $user->email),
+                'password' => $request->has('password') ? Hash::make($request->password) : $user->password,
+            ]);
 
-        // Update user data
-        $user->update([
-            'name' => $request->input('name', $user->name),
-            'email' => $request->input('email', $user->email),
-            'password' => $request->has('password') ? Hash::make($request->password) : $user->password,
-        ]);
+            if ($request->has('role')) {
+                $user->syncRoles($request->role);
+            }
 
-        return response()->json(['message' => 'User updated successfully', 'user' => $user]);
+            if ($request->has('permissions')) {
+                $user->syncPermissions($request->permissions);
+            }
+
+            return response()->json(['message' => 'User updated successfully', 'user' => $user]);
+        } catch (ValidationException $e) {
+            return response()->json(['errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to update user'], 500);
+        }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
-        // Find the user
-        $user = User::findOrFail($id);
-
-        // Delete the user
-        $user->delete();
-
-        return response()->json(['message' => 'User deleted successfully']);
+        try {
+            $user = User::findOrFail($id);
+            $user->delete();
+            return response()->json(['message' => 'User deleted successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to delete user'], 500);
+        }
     }
 }

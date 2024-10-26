@@ -17,10 +17,10 @@ class CategoryController extends Controller
     // Créer une nouvelle catégorie
     public function store(Request $request)
     {
-        // $request->validate([
-        //     'name' => 'required|string|max:255',
-        //     'description' => 'nullable|string',
-        // ]);
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
 
         $category = Category::create([
             'name' => $request->name,
@@ -33,8 +33,12 @@ class CategoryController extends Controller
     // Afficher une catégorie spécifique
     public function show($id)
     {
-        $category = Category::findOrFail($id);
-        return response()->json($category);
+        if($id && is_int($id)){
+            $category = Category::findOrFail($id);
+            return response()->json($category);
+        }else{
+            return response()->json("id invalid",404);
+        }
     }
 
     // Mettre à jour une catégorie
